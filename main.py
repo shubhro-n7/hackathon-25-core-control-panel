@@ -10,7 +10,7 @@ from datetime import datetime
 app = FastAPI(title="FastAPI MongoDB Server", version="1.0.0")
 
 # MongoDB connection
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongodb:27017")
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://admin:password123@mongodb:27017/fastapi_db?authSource=admin")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "fastapi_db")
 
 client = MongoClient(MONGO_URL)

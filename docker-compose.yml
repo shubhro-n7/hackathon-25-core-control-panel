@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MONGO_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://admin:password123@mongodb:27017/fastapi_db?authSource=admin
       - DATABASE_NAME=fastapi_db
     depends_on:
       - mongodb
@@ -29,16 +29,10 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
-      - ./mongo-init:/docker-entrypoint-initdb.d:ro  # Optional: init scripts
     networks:
       - app-network
     restart: unless-stopped
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+    command: mongod --auth
 
   # Optional: MongoDB Express for database management (web UI)
   mongo-express:
@@ -50,8 +44,10 @@ services:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
       - ME_CONFIG_MONGODB_ADMINPASSWORD=password123
       - ME_CONFIG_MONGODB_URL=mongodb://admin:password123@mongodb:27017/
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_BASICAUTH_USERNAME=webadmin
+      - ME_CONFIG_BASICAUTH_PASSWORD=webpass123
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     depends_on:
       - mongodb
     networks:

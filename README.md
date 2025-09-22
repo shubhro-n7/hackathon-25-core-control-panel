@@ -51,8 +51,8 @@ Once the application is running, visit:
 ### MongoDB Web Interface
 
 Access MongoDB Express at http://localhost:8081
-- Username: `admin`
-- Password: `admin`
+- Username: `webadmin`
+- Password: `webpass123`
 
 ## Development
 
