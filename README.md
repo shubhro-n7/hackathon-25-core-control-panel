@@ -1,15 +1,22 @@
-# FastAPI MongoDB Server
+# FastAPI MongoDB Server with Beanie ODM
 
-A complete FastAPI application with MongoDB integration, containerized with Docker and Docker Compose.
+A modern FastAPI application with MongoDB integration using Beanie ODM, containerized with Docker and Docker Compose.
 
 ## Features
 
-- FastAPI web framework with automatic OpenAPI documentation
-- MongoDB database with MongoDB Express web UI
-- Docker containerization for easy deployment
-- Complete CRUD operations for items
+- **FastAPI** web framework with automatic OpenAPI documentation
+- **Beanie ODM** - Modern async Python ODM for MongoDB based on Pydantic
+- **MongoDB** database with MongoDB Express web UI
+- **Docker** containerization for easy deployment
+- Complete **CRUD operations** for items with advanced features:
+  - Create, Read, Update, Delete operations
+  - Search functionality (by name or description)
+  - Filtering by name, price range
+  - Pagination support
+  - Database statistics
 - Health check endpoints
 - Input validation with Pydantic
+- Async/await support throughout
 - Proper error handling
 
 ## Quick Start
@@ -34,13 +41,23 @@ This will start three services:
 
 ### API Endpoints
 
+#### Core Endpoints
 - **GET /** - Welcome message
-- **GET /health** - Health check endpoint
+- **GET /health** - Health check endpoint with database connection status
+- **GET /stats** - Database statistics (total items, average price)
+
+#### Item Management (CRUD)
 - **POST /items/** - Create a new item
-- **GET /items/** - List all items (with pagination)
-- **GET /items/{item_id}** - Get a specific item
-- **PUT /items/{item_id}** - Update an item
-- **DELETE /items/{item_id}** - Delete an item
+- **GET /items/** - List all items with optional filters:
+  - `skip` & `limit` - Pagination
+  - `name` - Filter by name (case-insensitive search)
+  - `min_price` & `max_price` - Filter by price range
+- **GET /items/{item_id}** - Get a specific item by ID
+- **PUT /items/{item_id}** - Update an item (partial updates supported)
+- **DELETE /items/{item_id}** - Delete an item by ID
+
+#### Search & Discovery
+- **GET /items/search/{search_term}** - Search items by name or description
 
 ### API Documentation
 
@@ -95,9 +112,29 @@ curl -X POST "http://localhost:8000/items/" \
      -d '{"name": "Sample Item", "description": "This is a sample item", "price": 29.99}'
 ```
 
-#### Get All Items
+#### Get All Items (with Pagination)
 ```bash
-curl -X GET "http://localhost:8000/items/"
+curl -X GET "http://localhost:8000/items/?skip=0&limit=10"
+```
+
+#### Filter Items by Name
+```bash
+curl -X GET "http://localhost:8000/items/?name=sample"
+```
+
+#### Filter Items by Price Range
+```bash
+curl -X GET "http://localhost:8000/items/?min_price=20&max_price=50"
+```
+
+#### Search Items
+```bash
+curl -X GET "http://localhost:8000/items/search/sample"
+```
+
+#### Get Database Statistics
+```bash
+curl -X GET "http://localhost:8000/stats"
 ```
 
 #### Get Specific Item
@@ -105,7 +142,7 @@ curl -X GET "http://localhost:8000/items/"
 curl -X GET "http://localhost:8000/items/{item_id}"
 ```
 
-#### Update an Item
+#### Update an Item (Partial Update)
 ```bash
 curl -X PUT "http://localhost:8000/items/{item_id}" \
      -H "Content-Type: application/json" \
@@ -121,14 +158,22 @@ curl -X DELETE "http://localhost:8000/items/{item_id}"
 
 ```
 .
-├── main.py              # FastAPI application
-├── requirements.txt     # Python dependencies
+├── main.py              # FastAPI application with Beanie ODM models and endpoints
+├── requirements.txt     # Python dependencies (FastAPI, Beanie, etc.)
 ├── Dockerfile          # Docker configuration for FastAPI
 ├── docker-compose.yml  # Docker Compose configuration
 ├── .dockerignore       # Docker ignore file
 ├── .env                # Environment variables
 └── README.md           # This file
 ```
+
+## Key Technologies
+
+- **[FastAPI](https://fastapi.tiangolo.com/)** - Modern Python web framework for APIs
+- **[Beanie](https://beanie-odm.dev/)** - Async Python ODM for MongoDB, based on Pydantic
+- **[MongoDB](https://www.mongodb.com/)** - NoSQL document database
+- **[Pydantic](https://pydantic.dev/)** - Data validation using Python type hints
+- **[Docker](https://www.docker.com/)** - Containerization platform
 
 ## Stopping the Application
 

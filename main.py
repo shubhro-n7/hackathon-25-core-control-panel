@@ -1,129 +1,227 @@
 from fastapi import FastAPI, HTTPException
-from pymongo import MongoClient
-from bson import ObjectId
-from pydantic import BaseModel, Field, ConfigDict
-from pydantic.functional_validators import BeforeValidator
-from typing import Optional, List, Annotated
+from beanie import Document, init_beanie, PydanticObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field
+from typing import Optional, List
 import os
 from datetime import datetime
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="FastAPI MongoDB Server", version="1.0.0")
-
-# MongoDB connection
+# MongoDB connection settings
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://admin:password123@mongodb:27017/fastapi_db?authSource=admin")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "fastapi_db")
 
-client = MongoClient(MONGO_URL)
-db = client[DATABASE_NAME]
-collection = db["items"]
-
-# MongoDB ObjectId validation
-def validate_object_id(v):
-    if isinstance(v, ObjectId):
-        return str(v)
-    if isinstance(v, str):
-        if ObjectId.is_valid(v):
-            return v
-        raise ValueError("Invalid ObjectId format")
-    raise ValueError("ObjectId must be a valid ObjectId or string")
-
-# Type annotation for MongoDB ObjectId
-PyObjectId = Annotated[str, BeforeValidator(validate_object_id)]
-
-class ItemModel(BaseModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-        arbitrary_types_allowed=True,
-        json_encoders={ObjectId: str}
-    )
-    
-    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+# Beanie Document Model
+class Item(Document):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     price: float = Field(..., gt=0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    class Settings:
+        name = "items"  # Collection name
+        
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Sample Item",
+                "description": "This is a sample item",
+                "price": 29.99
+            }
+        }
 
+# Pydantic models for API requests/responses
 class ItemCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     price: float = Field(..., gt=0)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Sample Item",
+                "description": "This is a sample item",
+                "price": 29.99
+            }
+        }
 
 class ItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     price: Optional[float] = Field(None, gt=0)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Updated Item",
+                "description": "Updated description",
+                "price": 39.99
+            }
+        }
 
-@app.get("/")
+class ItemResponse(BaseModel):
+    id: PydanticObjectId = Field(..., alias="_id")
+    name: str
+    description: Optional[str]
+    price: float
+    created_at: datetime
+    
+    class Config:
+        populate_by_name = True
+
+# Database initialization
+async def init_db():
+    """Initialize database connection and Beanie ODM."""
+    # Create Motor client
+    client = AsyncIOMotorClient(MONGO_URL)
+    
+    # Initialize Beanie with the Item document class and database
+    await init_beanie(database=client[DATABASE_NAME], document_models=[Item])
+
+# Lifespan context manager for startup and shutdown events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    print("Database initialized successfully!")
+    yield
+    # Shutdown (cleanup if needed)
+    print("Shutting down...")
+
+# FastAPI app with lifespan events
+app = FastAPI(
+    title="FastAPI MongoDB Server with Beanie",
+    version="2.0.0",
+    description="A modern FastAPI application using Beanie ODM for MongoDB",
+    lifespan=lifespan
+)
+
+# API Endpoints
+@app.get("/", tags=["Root"])
 async def root():
-    return {"message": "FastAPI MongoDB Server is running!"}
+    """Welcome message."""
+    return {"message": "FastAPI MongoDB Server with Beanie ODM is running!"}
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
+    """Health check endpoint to verify database connection."""
     try:
-        # Test MongoDB connection
-        client.admin.command("ping")
-        return {"status": "healthy", "database": "connected"}
+        # Test database connection by counting documents
+        count = await Item.count()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "total_items": count
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database connection failed: {str(e)}")
 
-@app.post("/items/", response_model=ItemModel)
-async def create_item(item: ItemCreate):
-    item_dict = item.model_dump()
-    item_dict["created_at"] = datetime.utcnow()
+@app.post("/items/", response_model=Item, status_code=201, tags=["Items"])
+async def create_item(item_data: ItemCreate):
+    """Create a new item."""
+    # Create a new Item document
+    item = Item(**item_data.model_dump())
     
-    result = collection.insert_one(item_dict)
-    created_item = collection.find_one({"_id": result.inserted_id})
+    # Save to database
+    await item.insert()
     
-    return ItemModel(**created_item)
+    return item
 
-@app.get("/items/", response_model=List[ItemModel])
-async def read_items(skip: int = 0, limit: int = 10):
-    items = list(collection.find().skip(skip).limit(limit))
-    return [ItemModel(**item) for item in items]
-
-@app.get("/items/{item_id}", response_model=ItemModel)
-async def read_item(item_id: str):
-    if not ObjectId.is_valid(item_id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
+@app.get("/items/", response_model=List[Item], tags=["Items"])
+async def get_items(
+    skip: int = 0, 
+    limit: int = 10,
+    name: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None
+):
+    """Get all items with optional filtering and pagination."""
+    # Build query filters
+    query = {}
     
-    item = collection.find_one({"_id": ObjectId(item_id)})
-    if item is None:
+    if name:
+        query["name"] = {"$regex": name, "$options": "i"}  # Case-insensitive search
+    
+    if min_price is not None:
+        query.setdefault("price", {})["$gte"] = min_price
+        
+    if max_price is not None:
+        query.setdefault("price", {})["$lte"] = max_price
+    
+    # Execute query with pagination
+    items = await Item.find(query).skip(skip).limit(limit).to_list()
+    
+    return items
+
+@app.get("/items/{item_id}", response_model=Item, tags=["Items"])
+async def get_item(item_id: PydanticObjectId):
+    """Get a specific item by ID."""
+    item = await Item.get(item_id)
+    
+    if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     
-    return ItemModel(**item)
+    return item
 
-@app.put("/items/{item_id}", response_model=ItemModel)
-async def update_item(item_id: str, item_update: ItemUpdate):
-    if not ObjectId.is_valid(item_id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
+@app.put("/items/{item_id}", response_model=Item, tags=["Items"])
+async def update_item(item_id: PydanticObjectId, item_update: ItemUpdate):
+    """Update an existing item."""
+    # Find the item
+    item = await Item.get(item_id)
     
-    update_data = {k: v for k, v in item_update.model_dump(exclude_unset=True).items() if v is not None}
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Update only provided fields
+    update_data = item_update.model_dump(exclude_unset=True)
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
     
-    result = collection.update_one(
-        {"_id": ObjectId(item_id)}, 
-        {"$set": update_data}
-    )
+    # Update the item
+    await item.update({"$set": update_data})
     
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-    
-    updated_item = collection.find_one({"_id": ObjectId(item_id)})
-    return ItemModel(**updated_item)
+    # Return the updated item
+    return await Item.get(item_id)
 
-@app.delete("/items/{item_id}")
-async def delete_item(item_id: str):
-    if not ObjectId.is_valid(item_id):
-        raise HTTPException(status_code=400, detail="Invalid item ID")
+@app.delete("/items/{item_id}", tags=["Items"])
+async def delete_item(item_id: PydanticObjectId):
+    """Delete an item by ID."""
+    item = await Item.get(item_id)
     
-    result = collection.delete_one({"_id": ObjectId(item_id)})
-    
-    if result.deleted_count == 0:
+    if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+    
+    await item.delete()
     
     return {"message": "Item deleted successfully"}
+
+@app.get("/items/search/{search_term}", response_model=List[Item], tags=["Items"])
+async def search_items(search_term: str, limit: int = 10):
+    """Search items by name or description."""
+    items = await Item.find({
+        "$or": [
+            {"name": {"$regex": search_term, "$options": "i"}},
+            {"description": {"$regex": search_term, "$options": "i"}}
+        ]
+    }).limit(limit).to_list()
+    
+    return items
+
+@app.get("/stats", tags=["Statistics"])
+async def get_statistics():
+    """Get database statistics."""
+    total_items = await Item.count()
+    avg_price = await Item.aggregate([
+        {"$group": {"_id": None, "avg_price": {"$avg": "$price"}}}
+    ]).to_list()
+    
+    avg_price_value = avg_price[0]["avg_price"] if avg_price else 0
+    
+    return {
+        "total_items": total_items,
+        "average_price": round(avg_price_value, 2) if avg_price_value else 0
+    }
 
 if __name__ == "__main__":
     import uvicorn
