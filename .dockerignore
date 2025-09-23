@@ -56,3 +56,7 @@ logs/
 
 # MongoDB data
 mongodb_data/
+
+# Backup files
+*.backup
+__pycache__/

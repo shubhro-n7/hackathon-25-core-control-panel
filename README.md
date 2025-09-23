@@ -93,8 +93,25 @@ docker-compose up mongodb -d
 
 4. Run the FastAPI application locally:
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
+
+### Adding New Features
+
+#### Adding a New Model
+1. Create the model in `app/models/new_model.py`
+2. Add the import to `app/models/__init__.py`
+3. Register the model in `app/database.py`
+
+#### Adding New API Endpoints
+1. Create a new router in `app/routers/new_feature.py`
+2. Define your endpoints with proper schemas
+3. Include the router in `app/main.py`
+
+#### Adding New Schemas
+1. Create schemas in `app/schemas/new_schema.py`
+2. Add imports to `app/schemas/__init__.py`
+3. Use in your routers for request/response validation
 
 ### Environment Variables
 
@@ -158,14 +175,49 @@ curl -X DELETE "http://localhost:8000/items/{item_id}"
 
 ```
 .
-├── main.py              # FastAPI application with Beanie ODM models and endpoints
-├── requirements.txt     # Python dependencies (FastAPI, Beanie, etc.)
-├── Dockerfile          # Docker configuration for FastAPI
-├── docker-compose.yml  # Docker Compose configuration
-├── .dockerignore       # Docker ignore file
-├── .env                # Environment variables
-└── README.md           # This file
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI app initialization and startup
+│   ├── config.py            # Configuration and settings
+│   ├── database.py          # Database connection and initialization
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── item.py         # Item Beanie document model
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── item.py         # Pydantic schemas for API requests/responses
+│   └── routers/
+│       ├── __init__.py
+│       ├── items.py        # Item CRUD endpoints
+│       └── health.py       # Health check and statistics endpoints
+├── requirements.txt         # Python dependencies (FastAPI, Beanie, etc.)
+├── Dockerfile              # Docker configuration for FastAPI
+├── docker-compose.yml      # Docker Compose configuration
+├── .dockerignore           # Docker ignore file
+├── .env                    # Environment variables
+├── main.py.backup          # Backup of original monolithic file
+└── README.md               # This file
 ```
+
+## Modular Architecture Benefits
+
+### 🏗️ **Separation of Concerns**
+- **Models** (`app/models/`) - Database document definitions using Beanie ODM
+- **Schemas** (`app/schemas/`) - API request/response validation with Pydantic
+- **Routers** (`app/routers/`) - API endpoint logic organized by feature
+- **Config** (`app/config.py`) - Centralized application settings
+- **Database** (`app/database.py`) - Connection and initialization logic
+
+### 📈 **Scalability & Maintainability**
+- Easy to add new models, schemas, and API endpoints
+- Each module has a single responsibility
+- Clean imports and dependencies
+- Follows FastAPI best practices for larger applications
+
+### 🧪 **Testability**
+- Individual components can be tested in isolation
+- Mock dependencies easily for unit testing
+- Clear separation makes integration testing simpler
 
 ## Key Technologies
 

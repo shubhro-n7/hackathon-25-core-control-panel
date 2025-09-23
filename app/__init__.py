@@ -1,0 +1,1 @@
+# FastAPI MongoDB Server with Beanie ODM
