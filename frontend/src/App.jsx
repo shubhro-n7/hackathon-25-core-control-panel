@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import SampleTable from './components/SampleTable'
 import SampleForm from './components/SampleForm'
+import ItemTable from './components/ItemTable'
 
 
 const { Header, Sider, Content } = Layout
@@ -55,6 +56,11 @@ export default function App() {
 
 
             <SampleTable />
+          </div>
+          <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
+            <h2>Items from Backend</h2>
+            <p>This table fetches data from the backend API at <code>http://localhost:8000/items/</code>. Ensure your backend is running and accessible.</p>
+            <ItemTable />
           </div>
         </Content>
       </Layout>
