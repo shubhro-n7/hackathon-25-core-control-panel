@@ -4,6 +4,7 @@ FastAPI MongoDB Server with Beanie ODM - Main Application.
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_database, close_database
@@ -28,6 +29,23 @@ app = FastAPI(
     version=settings.API_VERSION,
     description=settings.API_DESCRIPTION,
     lifespan=lifespan
+)
+
+# ✅ Add CORS middleware
+origins = [
+    "http://localhost:3000",  # React frontend
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite frontend
+    "http://127.0.0.1:5173",
+    "*"  # <-- allows all origins (not recommended for prod)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # or ["*"] for all
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include routers
