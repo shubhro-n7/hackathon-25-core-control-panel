@@ -1,60 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { Table, Space, Button, message } from "antd";
-
-// Columns definition for Antd Table
-const columns = [
-  {
-    title: "ID",
-    dataIndex: "id",
-    key: "id",
-  },
-  {
-    title: "Name",
-    dataIndex: "envName",
-    key: "envName",
-  },
-  {
-    title: "Slug",
-    dataIndex: "slug",
-    key: "slug",
-  },
-  {
-    title: "Description",
-    dataIndex: "description",
-    key: "description",
-  },
-  {
-    title: "Created By",
-    dataIndex: "createdBy",
-    key: "createdBy",
-  },
-  {
-    title: "Created At",
-    dataIndex: "createdAt",
-    key: "createdAt",
-    render: (text) => new Date(text).toLocaleString(),
-  },
-  {
-    title: "Action",
-    key: "action",
-    render: (_, record) => (
-      <Space size="middle">
-        <Button type="link" onClick={() => handleView(record)}>
-          View
-        </Button>
-      </Space>
-    ),
-  },
-];
-
-// Dummy handler for action
-const handleView = (record) => {
-  message.info(`Viewing env: ${record.envName}`);
-};
+import { useNavigate } from "react-router-dom";
 
 const EnvTablePage = () => {
   const [envs, setEnvs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Columns definition for Antd Table
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Name",
+      dataIndex: "envName",
+      key: "envName",
+    },
+    {
+      title: "Slug",
+      dataIndex: "slug",
+      key: "slug",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: "Created By",
+      dataIndex: "createdBy",
+      key: "createdBy",
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) => new Date(text).toLocaleString(),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button type="link" onClick={() => handleView(record)}>
+            View
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  // Handler for action
+  const handleView = (record) => {
+    navigate(`/envs/${record.id}`);
+  };
+
 
   const fetchEnvs = async () => {
     setLoading(true);

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+from beanie import PydanticObjectId
 from typing import List
 from datetime import datetime
 
@@ -110,3 +111,22 @@ async def expire_key(key_id: str):
     key.status = "inactive"
     await key.save()
     return {"message": "Key expired", "keyId": str(key.id)}
+
+# 6. List keys for an environment
+@router.get("/envKeys")
+async def get_keys(envId: str = Query(...)):
+    # Convert string to PydanticObjectId
+    env_obj_id = PydanticObjectId(envId)
+
+    # Query EnvKey directly
+    keys = await EnvKey.find(EnvKey.envId.id == env_obj_id).to_list()
+
+    return [
+        {
+            "id": str(k.id),
+            "status": k.status,
+            "createdBy": k.createdBy,
+            "createdAt": k.createdAt,
+        }
+        for k in keys
+    ]
