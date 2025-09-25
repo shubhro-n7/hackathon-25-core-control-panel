@@ -1,69 +1,41 @@
 import React from 'react'
-import { Layout, Menu, Button, Space, theme } from 'antd'
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
-import SampleTable from './components/SampleTable'
-import SampleForm from './components/SampleForm'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Layout, theme } from 'antd'
+import SideMenu from './components/SideMenu'
 import ItemTable from './components/ItemTable'
+import EnvTable from './components/envsTable'
+import EnvDetailPage from './components/envDetail'
+// Placeholder components for Videos and Uploads
+const Videos = () => <div style={{ padding: 16 }}>Videos Page</div>
+const Uploads = () => <div style={{ padding: 16 }}>Uploads Page</div>
 
 
-const { Header, Sider, Content } = Layout
+const { Sider, Content } = Layout
 
 
 export default function App() {
   const [collapsed, setCollapsed] = React.useState(false)
   const { token } = theme.useToken()
 
-
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-        <div style={{ height: 48, margin: 16, background: 'rgba(255,255,255,0.2)', borderRadius: 6 }} />
-        <Menu theme="dark" defaultSelectedKeys={["1"]} mode="inline">
-          <Menu.Item key="1" icon={<UserOutlined />}>Users</Menu.Item>
-          <Menu.Item key="2" icon={<VideoCameraOutlined />}>Videos</Menu.Item>
-          <Menu.Item key="3" icon={<UploadOutlined />}>Uploads</Menu.Item>
-        </Menu>
-      </Sider>
-      <Layout>
-        <Header style={{ padding: '0 16px', background: token.colorBgContainer }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
-              <h3 style={{ margin: 0 }}>React + Ant Design Boilerplate</h3>
-            </Space>
-            <Space>
-              <Button>Docs</Button>
-              <Button type="primary">Sign In</Button>
-            </Space>
-          </div>
-        </Header>
-        <Content style={{ margin: 16 }}>
-          <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
-            <h2>Overview</h2>
-            <p>This template uses Vite + React + Ant Design (antd). Below are example components: a table and a form to get you started.</p>
-
-
-            <SampleForm />
-
-
-            <div style={{ height: 24 }} />
-
-
-            <SampleTable />
-          </div>
-          <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
-            <h2>Items from Backend</h2>
-            <p>This table fetches data from the backend API at <code>http://localhost:8000/items/</code>. Ensure your backend is running and accessible.</p>
-            <ItemTable />
-          </div>
-        </Content>
+    <Router>
+      <Layout style={{ minHeight: '100vh' }}>
+        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+          <SideMenu collapsed={collapsed} onCollapse={setCollapsed} />
+        </Sider>
+        <Layout>
+          <Content style={{ margin: 16 }}>
+            <Routes>
+              <Route path="/envs" element={<EnvTable />} />
+              <Route path="/envs/:envId" element={<EnvDetailPage />} />
+              <Route path="/items" element={<ItemTable />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/uploads" element={<Uploads />} />
+              <Route path="/" element={<ItemTable />} />
+            </Routes>
+          </Content>
+        </Layout>
       </Layout>
-    </Layout>
+    </Router>
   )
 }
