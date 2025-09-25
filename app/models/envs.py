@@ -4,6 +4,8 @@ from beanie import Document, Link
 from pydantic import Field
 from passlib.hash import bcrypt
 import secrets
+from pymongo import IndexModel, ASCENDING
+
 
 
 # ---------------------------
@@ -18,6 +20,9 @@ class Env(Document):
 
     class Settings:
         name = "envs"  # Mongo collection name
+        indexes = [
+            IndexModel([("slug", ASCENDING)], unique=True)
+        ]
 
 
 # ---------------------------

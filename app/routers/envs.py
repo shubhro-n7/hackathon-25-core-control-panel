@@ -42,7 +42,17 @@ class EnvResponse(BaseModel):
 @router.post("/", response_model=EnvResponse)
 async def create_env(payload: EnvCreate):
     env = Env(**payload.dict())
-    await env.insert()
+    try:
+        await env.insert()
+    except Exception as e:
+        # Handle DuplicateKeyError from pymongo/beanie
+        if hasattr(e, "code") and e.code == 11000:
+            # Extract duplicate key info if available
+            errmsg = getattr(e, "details", {}).get("errmsg") or str(e)
+            slug_val = getattr(e, "details", {}).get("keyValue", {}).get("slug")
+            msg = f"Environment with slug '{slug_val or payload.slug}' already exists."
+            raise HTTPException(status_code=409, detail=msg)
+        raise
     return EnvResponse(
         id=str(env.id),
         envName=env.envName,
