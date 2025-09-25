@@ -39,11 +39,55 @@ const EnvDetailPage = () => {
       key: "action",
       render: (_, record) => (
         <Space>
+
           <Button
             type="link"
-            onClick={() => message.info(`Key ID: ${record.id}`)}
+            disabled={record.status === "active" || record.status === "revoked"}
+            onClick={async () => {
+              try {
+                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/activate`, { method: "POST" });
+                if (!res.ok) throw new Error("Failed to activate key");
+                message.success("Key activated");
+                fetchKeys();
+              } catch (err) {
+                message.error("Error activating key");
+              }
+            }}
           >
-            View
+            Activate
+          </Button>
+          <Button
+            type="link"
+            disabled={record.status === "inactive" || record.status === "revoked"}
+            onClick={async () => {
+              try {
+                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/pause`, { method: "POST" });
+                if (!res.ok) throw new Error("Failed to pause key");
+                message.success("Key paused (inactive)");
+                fetchKeys();
+              } catch (err) {
+                message.error("Error pausing key");
+              }
+            }}
+          >
+            Pause
+          </Button>
+          <Button
+            type="link"
+            danger
+            disabled={record.status === "revoked"}
+            onClick={async () => {
+              try {
+                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/expire`, { method: "POST" });
+                if (!res.ok) throw new Error("Failed to expire key");
+                message.success("Key expired (revoked)");
+                fetchKeys();
+              } catch (err) {
+                message.error("Error expiring key");
+              }
+            }}
+          >
+            Expire
           </Button>
         </Space>
       ),

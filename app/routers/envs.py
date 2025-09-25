@@ -118,9 +118,35 @@ async def expire_key(key_id: str):
     if not key:
         raise HTTPException(status_code=404, detail="Key not found")
 
+    key.status = "revoked"
+    await key.save()
+    return {"message": "Key revoked", "keyId": str(key.id)}
+
+
+# 5b. Pause (deactivate) a key
+@router.post("/keys/{key_id}/pause")
+async def pause_key(key_id: str):
+    key = await EnvKey.get(key_id)
+    if not key:
+        raise HTTPException(status_code=404, detail="Key not found")
+
     key.status = "inactive"
     await key.save()
-    return {"message": "Key expired", "keyId": str(key.id)}
+    return {"message": "Key paused", "keyId": str(key.id)}
+
+# 5c. Mark key as active (if not revoked)
+@router.post("/keys/{key_id}/activate")
+async def activate_key(key_id: str):
+    key = await EnvKey.get(key_id)
+    if not key:
+        raise HTTPException(status_code=404, detail="Key not found")
+    if key.status == "revoked":
+        raise HTTPException(status_code=400, detail="Cannot activate a revoked key")
+    key.status = "active"
+    await key.save()
+    return {"message": "Key activated", "keyId": str(key.id)}
+
+
 
 # 6. List keys for an environment
 @router.get("/envKeys")
