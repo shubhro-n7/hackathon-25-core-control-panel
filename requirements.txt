@@ -1,5 +1,37 @@
+# fastapi==0.104.1
+# uvicorn[standard]==0.24.0
+# beanie==1.24.0
+# pydantic==2.5.0
+# python-multipart==0.0.6
+
+# # MongoDB driver
+# motor==3.3.2
+
+# # Password hashing (bcrypt)
+# passlib[bcrypt]==1.7.4
+
+# # Env var management
+# python-dotenv==1.0.0
+
+# # Optional (for secret encryption if needed later)
+# cryptography==41.0.7
+
+
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 beanie==1.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
+
+# MongoDB driver stack
+motor==3.3.2
+pymongo==4.6.3
+
+# Password hashing (bcrypt)
+passlib[bcrypt]==1.7.4
+
+# Env var management
+python-dotenv==1.0.0
+
+# Optional (for secret encryption if needed later)
+cryptography==41.0.7

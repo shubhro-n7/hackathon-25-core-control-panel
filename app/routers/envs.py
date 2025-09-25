@@ -1,0 +1,112 @@
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List
+from datetime import datetime
+
+from app.models import Env, EnvKey  # <-- from earlier schema
+
+router = APIRouter(prefix="/envs", tags=["Environments"])
+
+
+# ---------------------------
+# Pydantic Schemas
+# ---------------------------
+class EnvCreate(BaseModel):
+    envName: str
+    slug: str
+    description: str | None = None
+    createdBy: str
+
+
+class EnvKeyCreateResponse(BaseModel):
+    secret: str  # plain secret shown only once
+    envId: str
+    createdAt: datetime
+
+
+class EnvResponse(BaseModel):
+    id: str
+    envName: str
+    slug: str
+    description: str | None
+    createdBy: str
+    createdAt: datetime
+
+
+# ---------------------------
+# Endpoints
+# ---------------------------
+
+# 1. Create new environment
+@router.post("/", response_model=EnvResponse)
+async def create_env(payload: EnvCreate):
+    env = Env(**payload.dict())
+    await env.insert()
+    return EnvResponse(
+        id=str(env.id),
+        envName=env.envName,
+        slug=env.slug,
+        description=env.description,
+        createdBy=env.createdBy,
+        createdAt=env.createdAt,
+    )
+
+
+# 2. List environments
+@router.get("/", response_model=List[EnvResponse])
+async def list_envs():
+    envs = await Env.find_all().to_list()
+    return [
+        EnvResponse(
+            id=str(env.id),
+            envName=env.envName,
+            slug=env.slug,
+            description=env.description,
+            createdBy=env.createdBy,
+            createdAt=env.createdAt,
+        )
+        for env in envs
+    ]
+
+
+# 3. Create a new EnvKey and return secret (only once!)
+@router.post("/{env_id}/keys", response_model=EnvKeyCreateResponse)
+async def create_env_key(env_id: str, createdBy: str):
+    env = await Env.get(env_id)
+    if not env:
+        raise HTTPException(status_code=404, detail="Env not found")
+
+    plain_secret = EnvKey.generate_secret()
+    hashed = EnvKey.hash_secret(plain_secret)
+
+    env_key = EnvKey(envId=env, hashedSecret=hashed, createdBy=createdBy)
+    await env_key.insert()
+
+    return EnvKeyCreateResponse(
+        secret=plain_secret,
+        envId=str(env.id),
+        createdAt=env_key.createdAt,
+    )
+
+
+# 4. Lookup Env by secret
+@router.post("/lookup")
+async def lookup_env(secret: str):
+    env_keys = await EnvKey.find(EnvKey.status == "active").to_list()
+    for key in env_keys:
+        if EnvKey.verify_secret(secret, key.hashedSecret):
+            await key.fetch_link("envId")
+            return {"envId": str(key.envId.id), "slug": key.envId.slug}
+    raise HTTPException(status_code=401, detail="Invalid secret")
+
+
+# 5. Expire (deactivate) a key
+@router.post("/keys/{key_id}/expire")
+async def expire_key(key_id: str):
+    key = await EnvKey.get(key_id)
+    if not key:
+        raise HTTPException(status_code=404, detail="Key not found")
+
+    key.status = "inactive"
+    await key.save()
+    return {"message": "Key expired", "keyId": str(key.id)}
