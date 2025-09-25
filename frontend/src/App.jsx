@@ -10,6 +10,7 @@ import {
 import SampleTable from './components/SampleTable'
 import SampleForm from './components/SampleForm'
 import ItemTable from './components/ItemTable'
+import EnvTable from './components/envsTable'
 
 
 const { Header, Sider, Content } = Layout
@@ -25,13 +26,13 @@ export default function App() {
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
         <div style={{ height: 48, margin: 16, background: 'rgba(255,255,255,0.2)', borderRadius: 6 }} />
         <Menu theme="dark" defaultSelectedKeys={["1"]} mode="inline">
-          <Menu.Item key="1" icon={<UserOutlined />}>Users</Menu.Item>
+          <Menu.Item key="1" icon={<UserOutlined />}>Envs</Menu.Item>
           <Menu.Item key="2" icon={<VideoCameraOutlined />}>Videos</Menu.Item>
           <Menu.Item key="3" icon={<UploadOutlined />}>Uploads</Menu.Item>
         </Menu>
       </Sider>
       <Layout>
-        <Header style={{ padding: '0 16px', background: token.colorBgContainer }}>
+        {/* <Header style={{ padding: '0 16px', background: token.colorBgContainer }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Space>
               <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
@@ -42,9 +43,9 @@ export default function App() {
               <Button type="primary">Sign In</Button>
             </Space>
           </div>
-        </Header>
+        </Header> */}
         <Content style={{ margin: 16 }}>
-          <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
+          {/* <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
             <h2>Overview</h2>
             <p>This template uses Vite + React + Ant Design (antd). Below are example components: a table and a form to get you started.</p>
 
@@ -56,13 +57,14 @@ export default function App() {
 
 
             <SampleTable />
-          </div>
+          </div> */}
           <div style={{ padding: 16, minHeight: 360, background: token.colorBgContainer, borderRadius: 8 }}>
             <h2>Items from Backend</h2>
             <p>This table fetches data from the backend API at <code>http://localhost:8000/items/</code>. Ensure your backend is running and accessible.</p>
             <ItemTable />
           </div>
         </Content>
+        <EnvTable />
       </Layout>
     </Layout>
   )
