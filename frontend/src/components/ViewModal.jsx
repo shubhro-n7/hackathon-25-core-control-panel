@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "antd";
+import { Button, Select, message } from "antd";
 import { apiCall } from "../utils/api";
 
-const ViewModal = ({ open, onClose, viewId }) => {
+
+const ViewModal = ({ open, onClose, viewId, handleActivate, envs }) => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState("");
     const [error, setError] = useState("");
+    const [selectedEnvs, setSelectedEnvs] = useState([]);
+    const [copyLoading, setCopyLoading] = useState(false);
 
     useEffect(() => {
         if (!open || !viewId) return;
@@ -21,9 +24,32 @@ const ViewModal = ({ open, onClose, viewId }) => {
                 setError("Failed to fetch view details");
                 setLoading(false);
             });
+        setSelectedEnvs([]);
     }, [open, viewId]);
 
     if (!open) return null;
+    const handleCopy = async () => {
+        if (!viewId || selectedEnvs.length === 0) {
+            message.error("Select at least one environment");
+            return;
+        }
+        setCopyLoading(true);
+        try {
+            const res = await apiCall("/views/copy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewId, envIds: selectedEnvs }),
+            });
+            message.success(res.message || "Copied successfully");
+            setSelectedEnvs([]);
+            onClose();
+        } catch (err) {
+            message.error(err.message || "Copy failed");
+        } finally {
+            setCopyLoading(false);
+        }
+    };
+
     return (
         <div
             style={{
@@ -64,8 +90,27 @@ const ViewModal = ({ open, onClose, viewId }) => {
                         fontSize: 14,
                     }}>{data}</pre>
                 )}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
-                    <Button onClick={onClose}>Close</Button>
+                <div style={{ marginTop: 16 }}>
+                    <div style={{ marginBottom: 12 }}>
+                        <label><b>Copy to Environments:</b></label>
+                        <Select
+                            mode="multiple"
+                            style={{ width: "100%", marginTop: 8 }}
+                            placeholder="Select environments"
+                            value={selectedEnvs}
+                            onChange={setSelectedEnvs}
+                            options={envs.map((env) => ({ label: env.envName, value: env.id }))}
+                        />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                        {data && <Button type="primary" loading={copyLoading} onClick={handleCopy} disabled={selectedEnvs.length === 0}>
+                            Copy
+                        </Button>}
+                        {data && <Button type="default" onClick={() => handleActivate(JSON.parse(data))}>
+                            Activate
+                        </Button>}
+                        <Button onClick={onClose}>Close</Button>
+                    </div>
                 </div>
             </div>
         </div>

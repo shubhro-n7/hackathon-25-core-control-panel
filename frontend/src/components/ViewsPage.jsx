@@ -151,7 +151,7 @@ const ViewsPage = () => {
                                 key: "actions",
                                 render: (_, record) => (
                                     <Space size="middle">
-                                        <Button type="link" onClick={() => handleActivate(record)}>
+                                        <Button type="link" disabled={record.status === "active"} onClick={() => handleActivate(record)}>
                                             Activate
                                         </Button>
                                         <Button type="link" onClick={() => handleViewDetails(record)}>
@@ -214,6 +214,8 @@ const ViewsPage = () => {
                         open={viewModalOpen}
                         onClose={() => setViewModalOpen(false)}
                         viewId={viewModalId}
+                        handleActivate={handleActivate}
+                        envs={envs}
                     />
                 </div>
             )}
