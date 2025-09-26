@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Button, Select, message } from "antd";
+import { CloseOutlined } from "@ant-design/icons";
 import { apiCall } from "../utils/api";
 
 
-const ViewModal = ({ open, onClose, viewId, handleActivate, envs }) => {
+const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv }) => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState("");
     const [error, setError] = useState("");
@@ -73,8 +74,21 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs }) => {
                     minWidth: 500,
                     maxWidth: 700,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                    position: "relative",
                 }}
             >
+                <Button
+                    type="text"
+                    icon={<CloseOutlined style={{ fontSize: 20 }} />}
+                    onClick={onClose}
+                    style={{
+                        position: "absolute",
+                        top: 16,
+                        right: 16,
+                        zIndex: 10,
+                    }}
+                    aria-label="Close"
+                />
                 <h2>View Details</h2>
                 {loading ? (
                     <div>Loading...</div>
@@ -99,7 +113,7 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs }) => {
                             placeholder="Select environments"
                             value={selectedEnvs}
                             onChange={setSelectedEnvs}
-                            options={envs.map((env) => ({ label: env.envName, value: env.id }))}
+                            options={envs.map((env) => ({ label: env.envName, value: env.id, disabled: env.id === selectedEnv }))}
                         />
                     </div>
                     <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -109,7 +123,6 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs }) => {
                         {data && <Button type="default" onClick={() => handleActivate(JSON.parse(data))}>
                             Activate
                         </Button>}
-                        <Button onClick={onClose}>Close</Button>
                     </div>
                 </div>
             </div>

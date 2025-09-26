@@ -216,6 +216,7 @@ const ViewsPage = () => {
                         viewId={viewModalId}
                         handleActivate={handleActivate}
                         envs={envs}
+                        selectedEnv={selectedEnv}
                     />
                 </div>
             )}
