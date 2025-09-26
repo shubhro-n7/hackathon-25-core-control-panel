@@ -5,12 +5,13 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 from .envs import Env
+from pymongo import IndexModel, ASCENDING
 
 # ------------------------------
 # SubMenuMaster model
 # ------------------------------
 class SubMenuMaster(Document):
-    name: str
+    name: str = Field(unique=True)
     label: str
     link: str
     icon: Optional[str]
@@ -19,19 +20,25 @@ class SubMenuMaster(Document):
 
     class Settings:
         name = "subMenuMaster"  # collection name
+        indexes = [
+            IndexModel([("name", ASCENDING)], unique=True)
+        ]
 
 
 # ------------------------------
 # MenuMaster model
 # ------------------------------
 class MenuMaster(Document):
-    name: str
+    name: str = Field(unique=True)
     label: str
     icon: Optional[str]
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "menuMaster"
+        indexes = [
+            IndexModel([("name", ASCENDING)], unique=True)
+        ]
 
 # ------------------------------
 # Embedded mapping inside View
@@ -53,7 +60,8 @@ class ViewMenuMap(BaseModel):
 # ------------------------------
 class View(Document):
     env: Link[Env]
-    viewName: str
+    id: int
+    name: str
     menus: List[ViewMenuMap] = []
     status: Literal["draft", "active", "inactive"] = "draft"
     createdAt: datetime = Field(default_factory=datetime.utcnow)
@@ -76,7 +84,7 @@ class View(Document):
         view_data = {
             "id": str(self.id),
             "envId": str(self.env.id) if self.env else None,
-            "name": self.viewName,
+            "name": self.name,
             "menus": []
         }
 
@@ -122,11 +130,11 @@ class View(Document):
     async def set_active(self):
         """
         Mark this view as active, and deactivate any other view
-        with the same env and viewName.
+        with the same env and name.
         """
         await View.find(
             (View.env.id == self.env.id) &
-            (View.viewName == self.viewName) &
+            (View.name == self.name) &
             (View.id != self.id) &
             (View.status == "active")
         ).update({"$set": {"status": "inactive"}})
