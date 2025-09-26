@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Select, Table, Button, Space } from "antd";
+import { apiCall } from "../utils/api";
 
 const ViewsPage = () => {
     const { envId } = useParams();
@@ -12,27 +13,24 @@ const ViewsPage = () => {
 
 
     useEffect(() => {
-        fetch("http://localhost:8000/envs")
-            .then((res) => res.json())
-            .then((data) => setEnvs(data))
-            .catch((err) => {
-                setEnvs([]);
-            });
+            apiCall("/envs")
+                .then((data) => setEnvs(data))
+                .catch(() => {
+                    setEnvs([]);
+                });
     }, []);
     useEffect(() => {
         setSelectedEnv(envId || "");
     }, [envId]);
 
     const loadVewsByEnv = async (envId) => {
-        try {
-            const res = await fetch(`http://localhost:8000/views/env/${envId}`);
-            if (!res.ok) throw new Error("Failed to fetch views");
-            const data = await res.json();
-            setViews(data.views || []);
-        } catch (err) {
-            console.error(err);
-            setViews([]);
-        }
+            try {
+                const data = await apiCall(`/views/env/${envId}`);
+                setViews(data.views || []);
+            } catch (err) {
+                console.error(err);
+                setViews([]);
+            }
     };
 
     useEffect(() => {
@@ -45,24 +43,16 @@ const ViewsPage = () => {
 
     // Activate view and refresh table
     const handleActivate = async (record) => {
-        if (!record || !record.key) return;
-        try {
-            const res = await fetch(`http://localhost:8000/views/${record.key}/activate`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            if (res.ok) {
+            if (!record || !record.key) return;
+            try {
+                await apiCall(`/views/${record.key}/activate`, {
+                    method: "PUT",
+                });
                 // Refresh views list
                 loadVewsByEnv(selectedEnv);
-            } else {
-                // Optionally show error
+            } catch (err) {
                 alert("Failed to activate view");
             }
-        } catch (err) {
-            alert("Error activating view");
-        }
     };
 
     return (
