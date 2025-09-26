@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Select } from "antd";
+import { Select, Table, Button, Space } from "antd";
 
 const ViewsPage = () => {
     const { envId } = useParams();
     const [envs, setEnvs] = useState([]);
     const [selectedEnv, setSelectedEnv] = useState(envId || "");
     const navigate = useNavigate();
+
+    const [views, setViews] = useState([]);
 
 
     useEffect(() => {
@@ -20,6 +22,48 @@ const ViewsPage = () => {
     useEffect(() => {
         setSelectedEnv(envId || "");
     }, [envId]);
+
+    const loadVewsByEnv = async (envId) => {
+        try {
+            const res = await fetch(`http://localhost:8000/views/env/${envId}`);
+            if (!res.ok) throw new Error("Failed to fetch views");
+            const data = await res.json();
+            setViews(data.views || []);
+        } catch (err) {
+            console.error(err);
+            setViews([]);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedEnv) {
+            loadVewsByEnv(selectedEnv);
+        } else {
+            setViews([]);
+        }
+    }, [selectedEnv]);
+
+    // Activate view and refresh table
+    const handleActivate = async (record) => {
+        if (!record || !record.key) return;
+        try {
+            const res = await fetch(`http://localhost:8000/views/${record.key}/activate`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (res.ok) {
+                // Refresh views list
+                loadVewsByEnv(selectedEnv);
+            } else {
+                // Optionally show error
+                alert("Failed to activate view");
+            }
+        } catch (err) {
+            alert("Error activating view");
+        }
+    };
 
     return (
         <div style={{ padding: "2rem" }}>
@@ -41,8 +85,45 @@ const ViewsPage = () => {
             {selectedEnv && (
                 <div style={{ marginTop: "2rem" }}>
                     <h3>Views for Environment ID: {selectedEnv}</h3>
-                    {/* Placeholder for views content */}
-                    <p>Views content goes here...</p>
+                    <Table
+                        dataSource={views.map((view) => ({
+                            key: view.id,
+                            name: view.name,
+                            status: view.status,
+                            createdAt: view.createdAt,
+                        }))}
+                        columns={[
+                            {
+                                title: "Name",
+                                dataIndex: "name",
+                                key: "name",
+                            },
+                            {
+                                title: "Status",
+                                dataIndex: "status",
+                                key: "status",
+                            },
+                            {
+                                title: "Created At",
+                                dataIndex: "createdAt",
+                                key: "createdAt",
+                                render: (text) => text ? new Date(text).toLocaleString() : "-",
+                            },
+                            {
+                                title: "Actions",
+                                key: "actions",
+                                render: (_, record) => (
+                                    <Space size="middle">
+                                        <Button type="link" onClick={() => handleActivate(record)}>
+                                            Activate
+                                        </Button>
+                                    </Space>
+                                ),
+                            },
+                        ]}
+                        pagination={false}
+                        locale={{ emptyText: "No views found for this environment." }}
+                    />
                 </div>
             )}
         </div>

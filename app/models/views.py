@@ -131,12 +131,12 @@ class View(Document):
         Mark this view as active, and deactivate any other view
         with the same env and name.
         """
-        await View.find(
-            (View.env.id == self.env.id) &
-            (View.name == self.name) &
-            (View.id != self.id) &
-            (View.status == "active")
-        ).update({"$set": {"status": "inactive"}})
+        await View.find({
+            "env": self.env,
+            "name": self.name,
+            "status": "active",
+            "_id": {"$ne": self.id}
+        }).update({"$set": {"status": "inactive"}})
 
         self.status = "active"
         await self.save()

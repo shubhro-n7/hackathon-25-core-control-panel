@@ -155,3 +155,23 @@ async def activate_view(view_id: str):
 
     await view.set_active()
     return {"id": str(view.id), "status": view.status, "message": "View activated successfully"}
+
+# ------------------------------
+# List all Views for an Env
+# ------------------------------
+@router.get("/env/{env_id}", response_model=dict)
+async def list_views_for_env(env_id: str):
+    """
+    List all views for a given envId.
+    """
+    views = await View.find(View.env.id == PydanticObjectId(env_id)).to_list()
+    result = [
+        {
+            "id": str(view.id),
+            "name": view.name,
+            "status": view.status,
+            "createdAt": view.createdAt,
+        }
+        for view in views
+    ]
+    return {"views": result}
