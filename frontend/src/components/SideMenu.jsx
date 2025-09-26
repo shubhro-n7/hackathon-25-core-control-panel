@@ -16,7 +16,7 @@ export default function SideMenu({ collapsed, onCollapse }) {
           <Link to="/envs">Envs</Link>
         </Menu.Item>
         <Menu.Item key="2" icon={<VideoCameraOutlined />}>
-          <Link to="/videos">Videos</Link>
+          <Link to="/views">Views</Link>
         </Menu.Item>
         <Menu.Item key="3" icon={<UploadOutlined />}>
           <Link to="/uploads">Uploads</Link>

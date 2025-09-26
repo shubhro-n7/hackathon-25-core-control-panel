@@ -5,8 +5,8 @@ import SideMenu from './components/SideMenu'
 import ItemTable from './components/ItemTable'
 import EnvTable from './components/envsTable'
 import EnvDetailPage from './components/envDetail'
+import ViewsPage from './components/ViewsPage'
 // Placeholder components for Videos and Uploads
-const Videos = () => <div style={{ padding: 16 }}>Videos Page</div>
 const Uploads = () => <div style={{ padding: 16 }}>Uploads Page</div>
 
 
@@ -29,9 +29,10 @@ export default function App() {
               <Route path="/envs" element={<EnvTable />} />
               <Route path="/envs/:envId" element={<EnvDetailPage />} />
               <Route path="/items" element={<ItemTable />} />
-              <Route path="/videos" element={<Videos />} />
+              <Route path="/views" element={<ViewsPage />} />
+              <Route path="/views/:envId" element={<ViewsPage />} />
               <Route path="/uploads" element={<Uploads />} />
-              <Route path="/" element={<ItemTable />} />
+              <Route path="/" element={<EnvTable />} />
             </Routes>
           </Content>
         </Layout>

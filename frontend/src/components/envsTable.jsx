@@ -50,7 +50,11 @@ const EnvTablePage = () => {
       render: (_, record) => (
         <Space size="middle">
           <Button type="link" onClick={() => handleView(record)}>
-            View
+            Details
+          </Button>
+          <br />
+          <Button type="link" onClick={() => handleGoToViews(record)}>
+            Views
           </Button>
         </Space>
       ),
@@ -60,6 +64,9 @@ const EnvTablePage = () => {
   // Handler for action
   const handleView = (record) => {
     navigate(`/envs/${record.id}`);
+  };
+  const handleGoToViews = (record) => {
+    navigate(`/views/${record.id}`);
   };
 
 
