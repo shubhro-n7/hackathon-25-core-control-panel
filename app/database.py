@@ -5,7 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 
 from app.config import settings
-from app.models import Item, Env, EnvKey, SubMenuMaster, MenuMaster, Mapping
+from app.models import Item, Env, EnvKey, SubMenuMaster, MenuMaster, View
 
 
 async def init_database():
@@ -16,7 +16,7 @@ async def init_database():
     # Initialize Beanie with the Item document class and database
     await init_beanie(
         database=client[settings.DATABASE_NAME], 
-        document_models=[Item, Env, EnvKey, SubMenuMaster, MenuMaster, Mapping]  # Add all your document models here
+        document_models=[Item, Env, EnvKey, SubMenuMaster, MenuMaster, View]  # Add all your document models here
     )
     
     print(f"Connected to MongoDB: {settings.DATABASE_NAME}")
