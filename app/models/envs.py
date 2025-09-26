@@ -2,10 +2,9 @@ from datetime import datetime
 from typing import Optional
 from beanie import Document, Link
 from pydantic import Field
-from passlib.hash import bcrypt
+from passlib.hash import argon2
 import secrets
 from pymongo import IndexModel, ASCENDING
-
 
 
 # ---------------------------
@@ -49,10 +48,10 @@ class EnvKey(Document):
 
     @staticmethod
     def hash_secret(secret: str) -> str:
-        """Hash a secret using bcrypt."""
-        return bcrypt.hash(secret)
+        """Hash a secret using argon2."""
+        return argon2.hash(secret)
 
     @staticmethod
     def verify_secret(secret: str, hashed: str) -> bool:
         """Verify secret against stored hash."""
-        return bcrypt.verify(secret, hashed)
+        return argon2.verify(secret, hashed)
