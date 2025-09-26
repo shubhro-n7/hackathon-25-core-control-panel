@@ -14,6 +14,7 @@ services:
       - app-network
     restart: unless-stopped
     volumes:
+      - .:/app  # Mount source code for hot reload
       - ./logs:/app/logs  # Optional: for logging
 
   # MongoDB database
