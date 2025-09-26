@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import List, Optional
-from beanie import Document, Link
+from beanie import Document, Link, PydanticObjectId
 from pydantic import BaseModel, Field
-from bson import ObjectId
+from typing import Literal
 
 from .envs import Env
 
@@ -37,14 +37,14 @@ class MenuMaster(Document):
 # Embedded mapping inside View
 # ------------------------------
 class ViewSubMenuMap(BaseModel):
-    subMenuId: ObjectId  # reference to SubMenuMaster._id
-    order: int
+    subMenuId: PydanticObjectId  # reference to SubMenuMaster._id
+    order: Optional[int] = None
     visible: Optional[bool] = None  # mapping-level override
 
 
 class ViewMenuMap(BaseModel):
-    menuId: ObjectId  # reference to MenuMaster._id
-    order: int
+    menuId: PydanticObjectId  # reference to MenuMaster._id
+    order: Optional[int] = None
     subMenus: List[ViewSubMenuMap] = []
 
 
@@ -55,11 +55,11 @@ class View(Document):
     env: Link[Env]
     viewName: str
     menus: List[ViewMenuMap] = []
-    status: str = Field(default="draft", regex="^(draft|active|inactive)$")
+    status: Literal["draft", "active", "inactive"] = "draft"
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
-        name = "views"
+        name = "view"
 
     # --------------------------
     # METHODS
@@ -110,7 +110,7 @@ class View(Document):
         return view_data
 
     @classmethod
-    async def get_full_view(cls, view_id: ObjectId) -> Optional[dict]:
+    async def get_full_view(cls, view_id: PydanticObjectId) -> Optional[dict]:
         """
         Helper to fetch a view by Mongo _id and expand it fully.
         """

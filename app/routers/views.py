@@ -1,9 +1,8 @@
 # routes/views.py
 from fastapi import APIRouter, HTTPException
-from bson import ObjectId
+from beanie import PydanticObjectId
 
-from models import Env
-from models import MenuMaster, View, SubMenuMaster
+from app.models import Env, MenuMaster, View, SubMenuMaster
 
 router = APIRouter(prefix="/views", tags=["Views"])
 
@@ -35,17 +34,17 @@ async def create_view(view_data: dict):
     }
     """
     try:
-        env = await Env.get(ObjectId(view_data["envId"]))
+        env = await Env.get(PydanticObjectId(view_data["envId"]))
         if not env:
             raise HTTPException(status_code=404, detail=f"Env {view_data['envId']} not found")
 
         # Validate that menuIds and subMenuIds exist
         for menu in view_data.get("menus", []):
-            if not await MenuMaster.get(ObjectId(menu["menuId"])):
+            if not await MenuMaster.get(PydanticObjectId(menu["menuId"])):
                 raise HTTPException(status_code=404, detail=f"MenuMaster {menu['menuId']} not found")
 
             for sm in menu.get("subMenus", []):
-                if not await SubMenuMaster.get(ObjectId(sm["subMenuId"])):
+                if not await SubMenuMaster.get(PydanticObjectId(sm["subMenuId"])):
                     raise HTTPException(status_code=404, detail=f"SubMenuMaster {sm['subMenuId']} not found")
 
         view_data["env"] = env
@@ -66,7 +65,7 @@ async def get_view(view_id: str):
     """
     Fetch and expand a view into full JSON format.
     """
-    view_doc = await View.get_full_view(ObjectId(view_id))
+    view_doc = await View.get_full_view(PydanticObjectId(view_id))
     if not view_doc:
         raise HTTPException(status_code=404, detail="View not found")
     return view_doc
@@ -81,7 +80,7 @@ async def activate_view(view_id: str):
     Mark the given view as active, deactivate others
     with the same env and viewName.
     """
-    view = await View.get(ObjectId(view_id))
+    view = await View.get(PydanticObjectId(view_id))
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
 
