@@ -60,7 +60,7 @@ class ViewMenuMap(BaseModel):
 # ------------------------------
 class View(Document):
     env: Link[Env]
-    id: int
+    viewId: int
     name: str
     menus: List[ViewMenuMap] = []
     status: Literal["draft", "active", "inactive"] = "draft"
@@ -82,8 +82,7 @@ class View(Document):
         from copy import deepcopy
 
         view_data = {
-            "id": str(self.id),
-            "envId": str(self.env.id) if self.env else None,
+            "id": str(self.viewId),
             "name": self.name,
             "menus": []
         }

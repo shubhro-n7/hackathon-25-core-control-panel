@@ -113,7 +113,7 @@ async def create_view(data: dict):
 
         view_data_object = {
             "env": env,
-            "id": view_data["id"],
+            "viewId": view_data["id"],
             "name": view_data["name"],
             "menus": menus_for_view,
             "status": view_data.get("status", "draft")
