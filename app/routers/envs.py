@@ -99,16 +99,22 @@ async def create_env_key(env_id: str, createdBy: str):
         createdAt=env_key.createdAt,
     )
 
-
-# 4. Lookup Env by secret
-@router.post("/lookup")
-async def lookup_env(secret: str):
+async def resolve_env_from_secret(secret: str) -> Env | None:
     env_keys = await EnvKey.find(EnvKey.status == "active").to_list()
     for key in env_keys:
         if EnvKey.verify_secret(secret, key.hashedSecret):
             await key.fetch_link("envId")
-            return {"envId": str(key.envId.id), "slug": key.envId.slug}
-    raise HTTPException(status_code=401, detail="Invalid secret")
+            return key.envId
+    return None
+
+# 4. Lookup Env by secret
+@router.post("/lookup")
+async def lookup_env(secret: str):
+    env = await resolve_env_from_secret(secret)
+    if not env:
+        raise HTTPException(status_code=401, detail="Invalid secret")
+    return {"envId": str(env.id), "slug": env.slug}
+
 
 
 # 5. Expire (deactivate) a key
