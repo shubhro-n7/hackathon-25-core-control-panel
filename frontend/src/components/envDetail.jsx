@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Space, Button, message, Card, Modal } from "antd";
 import { useParams } from "react-router-dom";
+import { apiCall } from "../utils/api";
 
 const EnvDetailPage = () => {
   const { envId } = useParams();
@@ -44,14 +45,13 @@ const EnvDetailPage = () => {
             type="link"
             disabled={record.status === "active" || record.status === "revoked"}
             onClick={async () => {
-              try {
-                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/activate`, { method: "POST" });
-                if (!res.ok) throw new Error("Failed to activate key");
-                message.success("Key activated");
-                fetchKeys();
-              } catch (err) {
-                message.error("Error activating key");
-              }
+                try {
+                  await apiCall(`/envs/keys/${record.id}/activate`, { method: "POST" });
+                  message.success("Key activated");
+                  fetchKeys();
+                } catch (err) {
+                  message.error("Error activating key");
+                }
             }}
           >
             Activate
@@ -60,14 +60,13 @@ const EnvDetailPage = () => {
             type="link"
             disabled={record.status === "inactive" || record.status === "revoked"}
             onClick={async () => {
-              try {
-                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/pause`, { method: "POST" });
-                if (!res.ok) throw new Error("Failed to pause key");
-                message.success("Key paused (inactive)");
-                fetchKeys();
-              } catch (err) {
-                message.error("Error pausing key");
-              }
+                try {
+                  await apiCall(`/envs/keys/${record.id}/pause`, { method: "POST" });
+                  message.success("Key paused (inactive)");
+                  fetchKeys();
+                } catch (err) {
+                  message.error("Error pausing key");
+                }
             }}
           >
             Pause
@@ -77,14 +76,13 @@ const EnvDetailPage = () => {
             danger
             disabled={record.status === "revoked"}
             onClick={async () => {
-              try {
-                const res = await fetch(`http://localhost:8000/envs/keys/${record.id}/expire`, { method: "POST" });
-                if (!res.ok) throw new Error("Failed to expire key");
-                message.success("Key expired (revoked)");
-                fetchKeys();
-              } catch (err) {
-                message.error("Error expiring key");
-              }
+                try {
+                  await apiCall(`/envs/keys/${record.id}/expire`, { method: "POST" });
+                  message.success("Key expired (revoked)");
+                  fetchKeys();
+                } catch (err) {
+                  message.error("Error expiring key");
+                }
             }}
           >
             Expire
@@ -95,25 +93,21 @@ const EnvDetailPage = () => {
   ];
 
   const fetchEnv = async () => {
-    try {
-      const res = await fetch(`http://localhost:8000/envs`);
-      if (!res.ok) throw new Error("Failed to fetch envs");
-      const data = await res.json();
-      const selectedEnv = data.find((e) => e.id === envId);
-      setEnv(selectedEnv || null);
-    } catch (err) {
-      console.error(err);
-      message.error("Error fetching environment");
-    }
+      try {
+        const data = await apiCall(`/envs`);
+        const selectedEnv = data.find((e) => e.id === envId);
+        setEnv(selectedEnv || null);
+      } catch (err) {
+        console.error(err);
+        message.error("Error fetching environment");
+      }
   };
 
   const fetchKeys = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/envs/envKeys?envId=${envId}`);
-      if (!res.ok) throw new Error("Failed to fetch keys");
-      const data = await res.json();
-      setKeys(data);
+    const data = await apiCall(`/envs/envKeys?envId=${envId}`);
+    setKeys(data);
     } catch (err) {
       console.error(err);
       message.error("Error fetching keys");
@@ -125,15 +119,13 @@ const EnvDetailPage = () => {
   const createKey = async () => {
     setCreatingKey(true);
     try {
-      const res = await fetch(
-        `http://localhost:8000/envs/${envId}/keys?createdBy=shubhro`,
-        { method: "POST" }
-      );
-      if (!res.ok) throw new Error("Failed to create key");
-      const data = await res.json();
-      setModalData(data);
-      setModalVisible(true);
-      fetchKeys(); // Refresh table
+        const data = await apiCall(
+          `/envs/${envId}/keys?createdBy=shubhro`,
+          { method: "POST" }
+        );
+        setModalData(data);
+        setModalVisible(true);
+        fetchKeys(); // Refresh table
     } catch (err) {
       console.error(err);
       message.error("Error creating key");

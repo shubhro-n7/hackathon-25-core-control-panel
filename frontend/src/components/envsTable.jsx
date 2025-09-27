@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Space, Button, message, Modal, Form, Input } from "antd";
 import { useNavigate } from "react-router-dom";
+import { apiCall } from "../utils/api";
 
 const EnvTablePage = () => {
   const [envs, setEnvs] = useState([]);
@@ -13,11 +14,6 @@ const EnvTablePage = () => {
 
   // Columns definition for Antd Table
   const columns = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-    },
     {
       title: "Name",
       dataIndex: "envName",
@@ -73,10 +69,8 @@ const EnvTablePage = () => {
   const fetchEnvs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/envs"); // Adjust backend URL
-      if (!res.ok) throw new Error("Failed to fetch envs");
-      const data = await res.json();
-      setEnvs(data);
+    const data = await apiCall("/envs");
+    setEnvs(data);
     } catch (err) {
       console.error(err);
       message.error("Error fetching environments");
@@ -109,20 +103,20 @@ const EnvTablePage = () => {
       setModalLoading(true);
       setModalError("");
       const values = await form.validateFields();
-      const res = await fetch("http://localhost:8000/envs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        setModalError(errData.detail || "Failed to create environment");
-        setModalLoading(false);
-        return;
-      }
-      message.success("Environment created successfully");
-      setModalVisible(false);
-      fetchEnvs();
+        try {
+          await apiCall("/envs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          });
+          message.success("Environment created successfully");
+          setModalVisible(false);
+          fetchEnvs();
+        } catch (err) {
+          setModalError(err.message || "Failed to create environment");
+          setModalLoading(false);
+          return;
+        }
     } catch (err) {
       if (err.errorFields) {
         setModalError("Please fill all required fields.");

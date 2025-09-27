@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/", tags=["Root"])
 async def root():
     """Welcome message."""
-    return {"message": "FastAPI MongoDB Server with Beanie ODM is running!"}
+    return {"message": "FastAPI MongoDB Server with Beanie ODM is running!!!"}
 
 
 @router.get("/health", tags=["Health"])

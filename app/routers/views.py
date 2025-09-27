@@ -1,4 +1,4 @@
-# routes/views.py
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from beanie import PydanticObjectId
 
@@ -155,3 +155,69 @@ async def activate_view(view_id: str):
 
     await view.set_active()
     return {"id": str(view.id), "status": view.status, "message": "View activated successfully"}
+
+# ------------------------------
+# List all Views for an Env
+# ------------------------------
+@router.get("/env/{env_id}", response_model=dict)
+async def list_views_for_env(env_id: str):
+    """
+    List all views for a given envId.
+    """
+    views = await View.find(View.env.id == PydanticObjectId(env_id)).to_list()
+    result = [
+        {
+            "id": str(view.id),
+            "name": view.name,
+            "status": view.status,
+            "createdAt": view.createdAt,
+        }
+        for view in views
+    ]
+    return {"views": result}
+
+# ------------------------------
+# Copy a View to multiple envIds
+# ------------------------------
+
+@router.post("/copy", response_model=dict)
+async def copy_view_to_envs(data: dict):
+    """
+    Copy a view to multiple envIds.
+    Input example:
+    {
+        "viewId": "<view_id>",
+        "envIds": ["<env_id_1>", "<env_id_2>"]
+    }
+    """
+    try:
+        view_id = data.get("viewId")
+        env_ids = data.get("envIds", [])
+        if not view_id or not env_ids:
+            raise HTTPException(status_code=400, detail="viewId and envIds are required")
+
+        # Fetch the source view
+        src_view = await View.get(PydanticObjectId(view_id))
+        if not src_view:
+            raise HTTPException(status_code=404, detail="Source view not found")
+
+        copied_ids = []
+        for env_id in env_ids:
+            env = await Env.get(PydanticObjectId(env_id))
+            if not env:
+                continue  # skip invalid envs
+
+            # Prepare new view data
+            new_view_data = src_view.dict()
+            new_view_data["env"] = env
+            new_view_data["status"] = "draft"
+            new_view_data["createdAt"] = datetime.utcnow()
+            new_view_data.pop("id", None)  # Remove id for new document
+
+            new_view = View(**new_view_data)
+            await new_view.insert()
+            copied_ids.append(str(new_view.id))
+
+        return {"copiedViewIds": copied_ids, "message": f"Copied view to {len(copied_ids)} envs"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
