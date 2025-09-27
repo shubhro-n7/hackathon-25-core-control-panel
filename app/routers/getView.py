@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Header, HTTPException, Depends
 from beanie import PydanticObjectId
 from app.models import View
-from routers.envs import lookup_env
+from routers.envs import resolve_env_from_secret
+from beanie import PydanticObjectId
+from beanie.operators import Or
 
 router = APIRouter(prefix="/secure-views", tags=["secure-views"])
 
@@ -19,15 +21,22 @@ async def get_secure_view(
     """
 
     # 1. Validate secret
-    lookup_response = await lookup_env(x_token)
-    env_id = lookup_response.get("envId")
-    if not env_id:
+    lookup_response = await resolve_env_from_secret(x_token)
+    if lookup_response is None:
         raise HTTPException(status_code=401, detail="Invalid secret")
+    env_id = lookup_response.get("envId")
 
     # 2. Fetch the view for that env + view_id
+    conditions = [View.name == view_id]
+    try:
+        conditions.append(View.viewId == int(view_id))
+    except ValueError:
+        pass  # not an int, only match name
+
     view_doc = await View.find_one(
-        View.id == PydanticObjectId(view_id),
-        View.envId == env_id
+        Or(*conditions),
+        View.env.id == PydanticObjectId(env_id),
+        View.status == "active"
     )
     if not view_doc:
         raise HTTPException(status_code=404, detail="View not found")
