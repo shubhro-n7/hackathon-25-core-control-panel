@@ -221,3 +221,109 @@ async def copy_view_to_envs(data: dict):
         return {"copiedViewIds": copied_ids, "message": f"Copied view to {len(copied_ids)} envs"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+
+# ------------------------------
+# List all MenuMaster and SubMenuMaster
+# ------------------------------
+@router.get("/menus/all", response_model=dict)
+async def list_menu_and_submenu_master():
+    """
+    List all MenuMaster and SubMenuMaster documents in one response.
+    """
+    menus = await MenuMaster.find_all().to_list()
+    submenus = await SubMenuMaster.find_all().to_list()
+    menu_result = [
+        {
+            "id": str(menu.id),
+            "name": menu.name,
+            "label": menu.label,
+            "icon": menu.icon,
+            "createdAt": menu.createdAt,
+        }
+        for menu in menus
+    ]
+    submenu_result = [
+        {
+            "id": str(submenu.id),
+            "name": submenu.name,
+            "label": submenu.label,
+            "link": submenu.link,
+            "icon": submenu.icon,
+            "visible": submenu.visible,
+            "createdAt": submenu.createdAt,
+        }
+        for submenu in submenus
+    ]
+    return {"menus": menu_result, "submenus": submenu_result}
+
+
+
+# ------------------------------
+# Create a View from form (frontend)
+# ------------------------------
+@router.post("/create/", response_model=dict)
+async def create_view_from_form(data: dict):
+    """
+    Create a new View from frontend form submission.
+    Expects payload:
+    {
+        "envId": "<env_id>",
+        "viewData": {
+            "viewId": <int>,
+            "name": <str>,
+            "menus": [
+                {"id": <menu_id>, "order": <int>, "entities": [{"id": <entity_id>, "order": <int>}, ...]},
+                ...
+            ]
+        }
+    }
+    """
+    try:
+        env = await Env.get(PydanticObjectId(data["envId"]))
+        if not env:
+            raise HTTPException(status_code=404, detail=f"Env {data['envId']} not found")
+        view_data = data["viewData"]
+        if not view_data:
+            raise HTTPException(status_code=400, detail="viewData is required")
+
+        # Build menus for View model
+        menus_for_view = []
+        for menu in view_data.get("menus", []):
+            menu_master = await MenuMaster.get(PydanticObjectId(menu["id"]))
+            if not menu_master:
+                raise HTTPException(status_code=404, detail=f"MenuMaster {menu['id']} not found")
+            menu_id = menu_master.id
+
+            sub_menus_for_view = []
+            for sm in menu.get("entities", []):
+                sub_menu_master = await SubMenuMaster.get(PydanticObjectId(sm["id"]))
+                if not sub_menu_master:
+                    raise HTTPException(status_code=404, detail=f"SubMenuMaster {sm['id']} not found")
+                sub_menu_id = sub_menu_master.id
+                sub_menus_for_view.append({
+                    "subMenuId": sub_menu_id,
+                    "order": sm.get("order")
+                })
+
+            menus_for_view.append({
+                "menuId": menu_id,
+                "order": menu.get("order"),
+                "subMenus": sub_menus_for_view
+            })
+
+        view_data_object = {
+            "env": env,
+            "viewId": view_data["viewId"],
+            "name": view_data["name"],
+            "menus": menus_for_view,
+            "status": "draft",
+            "createdAt": datetime.utcnow()
+        }
+
+        view = View(**view_data_object)
+        await view.insert()
+        return {"id": str(view.id), "message": "View created successfully (draft)"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

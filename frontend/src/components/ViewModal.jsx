@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ViewEditForm from "./ViewEditForm";
 import { Button, Select, message } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { apiCall } from "../utils/api";
@@ -10,6 +11,7 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv })
     const [error, setError] = useState("");
     const [selectedEnvs, setSelectedEnvs] = useState([]);
     const [copyLoading, setCopyLoading] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
 
     useEffect(() => {
         if (!open || !viewId) return;
@@ -26,6 +28,7 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv })
                 setLoading(false);
             });
         setSelectedEnvs([]);
+        setEditOpen(false);
     }, [open, viewId]);
 
     if (!open) return null;
@@ -90,41 +93,51 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv })
                     aria-label="Close"
                 />
                 <h2>View Details</h2>
-                {loading ? (
-                    <div>Loading...</div>
-                ) : error ? (
-                    <div style={{ color: "red" }}>{error}</div>
+                {editOpen ? (
+                    <ViewEditForm
+                        selectedEnv={selectedEnv}
+                        initialValues={data ? { ...JSON.parse(data) } : {}}
+                        onCancel={() => setEditOpen(false)}
+                    />
                 ) : (
-                    <pre style={{
-                        background: "#f5f5f5",
-                        padding: 16,
-                        borderRadius: 4,
-                        maxHeight: 400,
-                        overflow: "auto",
-                        fontSize: 14,
-                    }}>{data}</pre>
+                    <>
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : error ? (
+                            <div style={{ color: "red" }}>{error}</div>
+                        ) : (
+                            <ViewEditForm
+                                selectedEnv={selectedEnv}
+                                initialValues={data ? { ...JSON.parse(data) } : {}}
+                                disabled
+                            />
+                        )}
+                        <div style={{ marginTop: 16 }}>
+                            <div style={{ marginBottom: 12 }}>
+                                <label><b>Copy to Environments:</b></label>
+                                <Select
+                                    mode="multiple"
+                                    style={{ width: "100%", marginTop: 8 }}
+                                    placeholder="Select environments"
+                                    value={selectedEnvs}
+                                    onChange={setSelectedEnvs}
+                                    options={envs.map((env) => ({ label: env.envName, value: env.id, disabled: env.id === selectedEnv }))}
+                                />
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                                {data && <Button type="primary" loading={copyLoading} onClick={handleCopy} disabled={selectedEnvs.length === 0}>
+                                    Copy
+                                </Button>}
+                                {data && <Button type="default" onClick={() => handleActivate(JSON.parse(data))}>
+                                    Activate
+                                </Button>}
+                                {data && <Button type="default" onClick={() => setEditOpen(true)}>
+                                    Edit
+                                </Button>}
+                            </div>
+                        </div>
+                    </>
                 )}
-                <div style={{ marginTop: 16 }}>
-                    <div style={{ marginBottom: 12 }}>
-                        <label><b>Copy to Environments:</b></label>
-                        <Select
-                            mode="multiple"
-                            style={{ width: "100%", marginTop: 8 }}
-                            placeholder="Select environments"
-                            value={selectedEnvs}
-                            onChange={setSelectedEnvs}
-                            options={envs.map((env) => ({ label: env.envName, value: env.id, disabled: env.id === selectedEnv }))}
-                        />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                        {data && <Button type="primary" loading={copyLoading} onClick={handleCopy} disabled={selectedEnvs.length === 0}>
-                            Copy
-                        </Button>}
-                        {data && <Button type="default" onClick={() => handleActivate(JSON.parse(data))}>
-                            Activate
-                        </Button>}
-                    </div>
-                </div>
             </div>
         </div>
     );
