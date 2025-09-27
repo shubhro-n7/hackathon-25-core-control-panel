@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Header, HTTPException, Depends
 from beanie import PydanticObjectId
 from app.models import View
-from routers.envs import resolve_env_from_secret
+from .envs import resolve_env_from_secret
 from beanie import PydanticObjectId
 from beanie.operators import Or
 
