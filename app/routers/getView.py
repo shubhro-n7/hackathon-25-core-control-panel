@@ -24,9 +24,7 @@ async def get_secure_view(
     lookup_response = await resolve_env_from_secret(x_token)
     if lookup_response is None:
         raise HTTPException(status_code=401, detail="Invalid secret")
-    print("lookup_response:", lookup_response)
-    env_id = str(lookup_response.get("envId"))
-    print("env_id is:", env_id)
+    env_id = str(lookup_response.id)
     # 2. Fetch the view for that env + view_id
     conditions = [View.name == view_id]
     try:
