@@ -119,7 +119,7 @@ const ViewsPage = () => {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <h3>Views for Environment ID: {selectedEnv}</h3>
                         <Button type="primary" onClick={() => setModalOpen(true)}>
-                            Create View
+                            Create View from JSON
                         </Button>
                     </div>
                     <Table

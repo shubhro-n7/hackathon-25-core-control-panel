@@ -98,10 +98,6 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv })
                         selectedEnv={selectedEnv}
                         initialValues={data ? { ...JSON.parse(data) } : {}}
                         onCancel={() => setEditOpen(false)}
-                        onSubmit={(values) => {
-                            console.log("Edit form submitted:", values);
-                            setEditOpen(false);
-                        }}
                     />
                 ) : (
                     <>
@@ -110,14 +106,11 @@ const ViewModal = ({ open, onClose, viewId, handleActivate, envs, selectedEnv })
                         ) : error ? (
                             <div style={{ color: "red" }}>{error}</div>
                         ) : (
-                            <pre style={{
-                                background: "#f5f5f5",
-                                padding: 16,
-                                borderRadius: 4,
-                                maxHeight: 400,
-                                overflow: "auto",
-                                fontSize: 14,
-                            }}>{data}</pre>
+                            <ViewEditForm
+                                selectedEnv={selectedEnv}
+                                initialValues={data ? { ...JSON.parse(data) } : {}}
+                                disabled
+                            />
                         )}
                         <div style={{ marginTop: 16 }}>
                             <div style={{ marginBottom: 12 }}>

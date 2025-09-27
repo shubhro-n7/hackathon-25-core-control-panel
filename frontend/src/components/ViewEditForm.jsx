@@ -9,7 +9,7 @@ const entityFields = [
     { name: "order", label: "Order", type: "number" }
 ];
 
-const ViewEditForm = ({ initialValues, onCancel, selectedEnv }) => {
+const ViewEditForm = ({ initialValues, onCancel, selectedEnv, disabled }) => {
     const [menuOptions, setMenuOptions] = useState([]);
     const [entityOptions, setEntityOptions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -81,11 +81,11 @@ const ViewEditForm = ({ initialValues, onCancel, selectedEnv }) => {
                     onFinish={handleSubmit}
                     autoComplete="off"
                 >
-                    <Form.Item name="id" label="ID" rules={[{ required: true, message: "ID is required" }]}>
-                        <Input type="number" />
+                    <Form.Item name="id" label="ID" rules={[{ required: true, message: "ID is required" }]}> 
+                        <Input type="number" disabled={disabled} />
                     </Form.Item>
-                    <Form.Item name="name" label="View Name" rules={[{ required: true, message: "Name is required" }]}>
-                        <Input />
+                    <Form.Item name="name" label="View Name" rules={[{ required: true, message: "Name is required" }]}> 
+                        <Input disabled={disabled} />
                     </Form.Item>
                     <Form.List name="menus">
                         {(fields, { add, remove }) => (
@@ -97,26 +97,28 @@ const ViewEditForm = ({ initialValues, onCancel, selectedEnv }) => {
                                             marginBottom: 16,
                                             position: "relative",
                                             paddingTop: 16,
-                                            background: "#f0f2f5", // slightly darker than white
+                                            background: "#f0f2f5",
                                             border: "1px solid #e0e0e0"
                                         }}
                                         bodyStyle={{ paddingTop: 8, background: "#f0f2f5" }}
                                     >
-                                        <Button
-                                            type="text"
-                                            icon={<CloseOutlined />}
-                                            onClick={() => remove(field.name)}
-                                            style={{ position: "absolute", top: 4, right: 4, zIndex: 2, color: "#888" }}
-                                            size="small"
-                                            aria-label="Remove Menu"
-                                        />
+                                        {!disabled && (
+                                            <Button
+                                                type="text"
+                                                icon={<CloseOutlined />}
+                                                onClick={() => remove(field.name)}
+                                                style={{ position: "absolute", top: 4, right: 4, zIndex: 2, color: "#888" }}
+                                                size="small"
+                                                aria-label="Remove Menu"
+                                            />
+                                        )}
                                         <Form.Item
                                             {...field}
                                             name={[field.name, "name"]}
                                             label="Menu Name"
                                             rules={[{ required: true, message: "Menu name required" }]}
                                         >
-                                            <Select options={menuOptions} showSearch />
+                                            <Select options={menuOptions} showSearch disabled={disabled} />
                                         </Form.Item>
                                         <Form.List name={[field.name, "entities"]}>
                                             {(entityFieldsArr, { add: addEntity, remove: removeEntity }) => (
@@ -128,21 +130,23 @@ const ViewEditForm = ({ initialValues, onCancel, selectedEnv }) => {
                                                             style={{ marginBottom: 8, position: "relative", paddingTop: 12 }}
                                                             bodyStyle={{ paddingTop: 8 }}
                                                         >
-                                                            <Button
-                                                                type="text"
-                                                                icon={<CloseOutlined />}
-                                                                onClick={() => removeEntity(entityField.name)}
-                                                                style={{ position: "absolute", top: 2, right: 2, zIndex: 2, color: "#888" }}
-                                                                size="small"
-                                                                aria-label="Remove Entity"
-                                                            />
+                                                            {!disabled && (
+                                                                <Button
+                                                                    type="text"
+                                                                    icon={<CloseOutlined />}
+                                                                    onClick={() => removeEntity(entityField.name)}
+                                                                    style={{ position: "absolute", top: 2, right: 2, zIndex: 2, color: "#888" }}
+                                                                    size="small"
+                                                                    aria-label="Remove Entity"
+                                                                />
+                                                            )}
                                                             <Form.Item
                                                                 {...entityField}
                                                                 name={[entityField.name, "name"]}
                                                                 label="Entity Name"
                                                                 rules={[{ required: true, message: "Entity name required" }]}
                                                             >
-                                                                <Select options={entityOptions} showSearch />
+                                                                <Select options={entityOptions} showSearch disabled={disabled} />
                                                             </Form.Item>
                                                             {entityFields.map((ef) => (
                                                                 <Form.Item
@@ -152,35 +156,41 @@ const ViewEditForm = ({ initialValues, onCancel, selectedEnv }) => {
                                                                     label={ef.label}
                                                                     valuePropName={ef.type === "checkbox" ? "checked" : "value"}
                                                                 >
-                                                                    {ef.type === "checkbox" ? <Input type="checkbox" /> : <Input type={ef.type} />}
+                                                                    {ef.type === "checkbox" ? <Input type="checkbox" disabled={disabled} /> : <Input type={ef.type} disabled={disabled} />}
                                                                 </Form.Item>
                                                             ))}
                                                         </Card>
                                                     ))}
-                                                    <div style={{ marginBottom: 8 }}>
-                                                        <Button type="dashed" onClick={() => addEntity()} block>
-                                                            Add Entity
-                                                        </Button>
-                                                    </div>
+                                                    {!disabled && (
+                                                        <div style={{ marginBottom: 8 }}>
+                                                            <Button type="dashed" onClick={() => addEntity()} block>
+                                                                Add Entity
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </Form.List>
                                     </Card>
                                 ))}
-                                <Form.Item>
-                                    <Button type="dashed" onClick={() => add()} block>
-                                        Add Menu
-                                    </Button>
-                                </Form.Item>
+                                {!disabled && (
+                                    <Form.Item>
+                                        <Button type="dashed" onClick={() => add()} block>
+                                            Add Menu
+                                        </Button>
+                                    </Form.Item>
+                                )}
                             </div>
                         )}
                     </Form.List>
-                    <Form.Item style={{ marginTop: 24 }}>
-                        <Space>
-                            <Button onClick={onCancel}>Cancel</Button>
-                            <Button type="primary" htmlType="submit">Save Copy</Button>
-                        </Space>
-                    </Form.Item>
+                    {!disabled && (
+                        <Form.Item style={{ marginTop: 24 }}>
+                            <Space>
+                                <Button onClick={onCancel}>Cancel</Button>
+                                <Button type="primary" htmlType="submit">Save Copy</Button>
+                            </Space>
+                        </Form.Item>
+                    )}
                 </Form>
             )}
         </div>
